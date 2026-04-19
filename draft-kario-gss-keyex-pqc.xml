@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+<!ENTITY RFC1321 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.1321.xml">
+<!ENTITY RFC2045 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2045.xml">
+<!ENTITY RFC2119 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml">
+<!ENTITY RFC2743 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2743.xml">
+<!ENTITY RFC4462 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.4462.xml">
+<!ENTITY RFC5656 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.5656.xml">
+<!ENTITY RFC7546 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.7546.xml">
+<!ENTITY RFC8174 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8174.xml">
+<!ENTITY PQTKEX PUBLIC '' 'http://xml2rfc.ietf.org/public/rfc/bibxml3/reference.I-D.draft-ietf-sshm-mlkem-hybrid-kex-10.xml'>
+]>
+<?xml-stylesheet type="text/xsl" href="rfc2629.xslt"?>
+
+<?rfc compact="yes"?>
+<?rfc subcompact="no"?>
+<?rfc toc="yes"?>
+<?rfc sortrefs="yes"?>
+<?rfc symrefs="yes"?>
+<?rfc rfcedstyle="yes"?>
+<?rfc autobreaks="yes"?>
+<?rfc docmapping="yes"?>
+
+<rfc category="std" docName="draft-kario-gss-keyex-pqc"
+     ipr="trust200902">
+  <front>
+    <title abbrev="GSS Keyex SHA2">GSS-API Key Exchange with hybrid ML-KEM</title>
+
+    <author fullname="Alicja Kario" initials="A." surname="Kario">
+      <organization>Red Hat, Inc.</organization>
+
+      <address>
+        <postal>
+          <street>Purkynova 115</street>
+          <city>Brno</city>
+          <code>612 00</code>
+          <country>Czech Republic</country>
+        </postal>
+        <email>hkario@redhat.com</email>
+      </address>
+    </author>
+    <date month="Apr" year="2026" />
+
+    <area>Security</area>
+
+    <workgroup>Internet Engineering Task Force</workgroup>
+
+    <abstract>
+      <t>This document specifies additions to RFC4462.
+      It defines a new key exchange methods that use hybrid
+      traditional/ML-KEM key exchange.
+      The purpose of this specification is to
+      modernize the cryptographic primitives used by Generic Security Service
+      (GSS) key exchanges.</t>
+    </abstract>
+  </front>
+
+
+  <middle>
+    <section title="Introduction">
+      <t>Secure Shell (SSH) Generic Security Service
+      Application Program Interface (GSS-API) methods <xref target="RFC4462"/>
+      allow the use of GSS-API <xref target="RFC2743"/> for authentication and
+      key exchange in SSH.
+      This document updates <xref target="RFC4462"/> with new methods
+      based on <xref target="I-D.ietf-sshm-mlkem-hybrid-kex"/>
+      intended to support environments that
+      desire to use key exchanges
+      resistant to attacks by CRQC (Cryptographically Relevant Quantum
+      Computers).</t>
+    </section>
+
+    <section title="Rationale">
+     <t>As documented in <xref target="I-D.ietf-sshm-mlkem-hybrid-kex"/>
+      traditional cryptography (Finite Field Diffie-Hellman and Elliptic Curve
+      Diffie-Hellman) will not be secure agains CRQCs, to address that
+      we propose use of hybrid Post-Quantum Traditional (PQ/T) cryptography
+      together with GSS-API methods.</t>
+    </section>
+
+    <section title="Document Conventions">
+      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL
+      NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED",
+      "MAY", and "OPTIONAL" in this document are to be interpreted as
+      described in BCP 14 <xref target="RFC2119"/>
+      <xref target="RFC8174"/> when, and only when, they
+      appear in all capitals, as shown here.</t>
+    </section>
+
+    <section title="New PQ/T Hybrid Key Exchange Method methods">
+      <t>In <xref target="I-D.ietf-sshm-mlkem-hybrid-kex"/> new SSH key
+      exchange algorithms based on PQ/T Hybrid Key Exchange Methods
+      are introduced. We reuse much of section 2
+      of <xref target="I-D.ietf-sshm-mlkem-hybrid-kex"/>
+      to define GSS-API-authenticated PQ/T Hybrid Key Exchanges.</t>
+
+      <section title="Generic GSS-API Key Exchange with PQ/T Hybrid" anchor="gen_gss_pqt">
+        <t>This section reuses much of the scheme defined in Section 2.1 of
+        <xref target="RFC4462"/> and combines it with the scheme defined in
+        Section 2 of <xref target="I-D.ietf-sshm-mlkem-hybrid-kex"/>;
+        in particular, all checks and
+        verification steps prescribed in Section 2.1 of
+        <xref target="I-D.ietf-sshm-mlkem-hybrid-kex"/> apply here as well.</t>
+
+        <t>This section defers to <xref target="RFC7546"/> as the source of
+        information on GSS-API context establishment operations, Section 3
+        being the most relevant. All Security Considerations described in
+        <xref target="RFC7546"/> apply here too.</t>
+
+        <t>A GSS Context is established according to Section 4 of
+        <xref target="RFC5656"/>; The client initiates the establishment
+        using GSS_Init_sec_context() and the server responds to it using
+        GSS_Accept_sec_context(). For the negotiation, the client MUST set
+        mutual_req_flag and integ_req_flag to "true". In addition,
+        deleg_req_flag MAY be set to "true" to request access delegation, if
+        requested by the user. Since the key exchange process authenticates
+        only the host, the setting of anon_req_flag is immaterial to this
+        process. If the client does not support the "gssapi-keyex" user
+        authentication method described in Section 4 of
+        <xref target="RFC4462"/>, or does not intend to use that method in
+        conjunction with the GSS-API context established during key exchange,
+        then anon_req_flag SHOULD be set to "true". Otherwise, this flag MAY
+        be set to true if the client wishes to hide its identity.
+        This key exchange process will exchange only a single message token
+        once the context has been established, therefore the
+        replay_det_req_flag and sequence_req_flag SHOULD be set to "false".
+        </t>
+
+        <t>The client MUST include its Traditional public key and Post-Quantum
+        encapsulation key with the first message it
+        sends to the server during this process; if the server receives
+            more than one key or none at all, the key exchange MUST fail.
+        That is, the Q_C field of SSH_MSG_KEXGSS_INIT must contain the
+            concatenation of C_PK2 and C_PK1 from section 2.1 of
+        <xref target="I-D.ietf-sshm-mlkem-hybrid-kex"/>.</t>
+
+        <t>During GSS Context establishment multiple tokens may be exchanged by
+        the client and the server. When the GSS Context is established
+        (major_status is GSS_S_COMPLETE) the parties check that
+        mutual_state and integ_avail are both "true". If not the key
+        exchange MUST fail.</t>
+
+        <t>When the GSS Context is established, the Q_S field in server's
+        SSH_MSG_KEXGSS_COMPLETE message needs to contain the concatenation of
+        of S_CT2 and S_PK1 from section 2.1 of
+        <xref target="I-D.ietf-sshm-mlkem-hybrid-kex"/>.</t>
+
+        <t>Once a party receives the peer's public key it proceeds to compute
+            a shared secret K. This is done as specified in section 2.4 of
+        <xref target="I-D.ietf-sshm-mlkem-hybrid-kex"/>. </t>
+
+        <t>To verify the integrity of the handshake, peers use the Hash
+        Function defined by the selected Key Exchange method to calculate H:
+        </t>
+
+        <t>H = hash(V_C || V_S || I_C || I_S || K_S || Q_C || Q_S || K).</t>
+
+        <t>The GSS_GetMIC() call is used by the server with H as the payload
+        and generates a MIC. The GSS_VerifyMIC() call is used by the client to
+        verify the MIC.</t>
+
+        <t>If any GSS_Init_sec_context() or GSS_Accept_sec_context() returns
+        a major_status other than GSS_S_COMPLETE or GSS_S_CONTINUE_NEEDED, or
+        any other GSS-API call returns a major_status other than
+        GSS_S_COMPLETE, the key exchange MUST fail. The same recommendations
+        expressed in Section 2.1 of <xref target="RFC4462"/> are followed with
+        regards to error reporting.</t>
+
+        <t>The following is an overview of the key exchange process:
+          <figure>
+            <artwork>
+      Client                                                Server
+      ------                                                ------
+      Generate ephemeral key pairs.
+      Calls GSS_Init_sec_context().
+      SSH_MSG_KEXGSS_INIT  ---------------&gt;
+
+                                      Verify received keys are valid.
+  (Optional)                  &lt;------------- SSH_MSG_KEXGSS_HOSTKEY
+
+  (Loop)
+  |                                 Calls GSS_Accept_sec_context().
+  |                           &lt;------------ SSH_MSG_KEXGSS_CONTINUE
+  |   Calls GSS_Init_sec_context().
+  |   SSH_MSG_KEXGSS_CONTINUE ------------&gt;
+
+                                    Calls GSS_Accept_sec_context().
+                   Generate ephemeral key pair and encapsulate key.
+                                             Compute shared secret.
+                                                   Computes hash H.
+                                       Calls GSS_GetMIC( H ) = MIC.
+                           &lt;------------ SSH_MSG_KEXGSS_COMPLETE
+
+      Verify received key is valid, decapsulate key.
+      Compute shared secret.
+      Compute hash = H
+      Calls GSS_VerifyMIC( MIC, H )
+            </artwork>
+          </figure>
+        </t>
+
+    <t>This is implemented with the following messages:</t>
+        <figure>
+          <preamble>The client sends:</preamble>
+          <artwork>
+    byte      SSH_MSG_KEXGSS_INIT
+    string    output_token (from GSS_Init_sec_context())
+    string    Q_C, client's ephemeral public keys octet string
+          </artwork>
+        </figure>
+        <figure>
+          <preamble>The server may responds with:</preamble>
+          <artwork>
+    byte      SSH_MSG_KEXGSS_HOSTKEY
+    string    server public host key and certificates (K_S)
+          </artwork>
+        </figure>
+        <figure>
+          <preamble>The server sends:</preamble>
+          <artwork>
+    byte      SSH_MSG_KEXGSS_CONTINUE
+    string    output_token (from GSS_Accept_sec_context())
+          </artwork>
+        </figure>
+        <t>Each time the client receives the message described above, it
+        makes another call to GSS_Init_sec_context().</t>
+        <figure>
+          <preamble>The client sends:</preamble>
+          <artwork>
+    byte      SSH_MSG_KEXGSS_CONTINUE
+    string    output_token (from GSS_Init_sec_context())
+          </artwork>
+        </figure>
+        <figure>
+          <preamble>As the final message the server sends either:</preamble>
+          <artwork>
+    byte      SSH_MSG_KEXGSS_COMPLETE
+    string    Q_S, server's ephemeral public key and encapsulated key octet string
+    string    mic_token (MIC of H)
+    boolean   TRUE
+    string    output_token (from GSS_Accept_sec_context())
+          </artwork>
+        </figure>
+        <figure>
+          <preamble>Or the following if no output_token is available:</preamble>
+          <artwork>
+    byte      SSH_MSG_KEXGSS_COMPLETE
+    string    Q_S, server's ephemeral public key and encapsulated key octet string
+    string    mic_token (MIC of H)
+    boolean   FALSE
+          </artwork>
+        </figure>
+        <figure>
+          <preamble>The hash H is computed as the HASH hash of the
+          concatenation of the following:</preamble>
+          <artwork>
+    string    V_C, the client's version string (CR, NL excluded)
+    string    V_S, server's version string (CR, NL excluded)
+    string    I_C, payload of the client's SSH_MSG_KEXINIT
+    string    I_S, payload of the server's SSH_MSG_KEXINIT
+    string    K_S, server's public host key
+    string    Q_C, client's ephemeral public keys octet string
+    string    Q_S, server's ephemeral public key and encapsulated key octet string
+    mpint     K,   shared secret
+          </artwork>
+        </figure>
+
+        <t>This value is called the exchange hash, and it is used to
+        authenticate the key exchange. The exchange hash SHOULD be kept
+        secret. If no SSH_MSG_KEXGSS_HOSTKEY message has been sent by the
+        server or received by the client, then the empty string is used in
+        place of K_S when computing the exchange hash.</t>
+
+        <t>Since this key exchange method does not require the host key to
+        be used for any encryption operations, the SSH_MSG_KEXGSS_HOSTKEY
+        message is OPTIONAL. If the "null" host key algorithm described in
+        Section 5 of <xref target="RFC4462"/> is used, this message MUST
+        NOT be sent.</t>
+
+        <t>If the client receives a SSH_MSG_KEXGSS_CONTINUE message after
+        a call to GSS_Init_sec_context() has returned a major_status code
+        of GSS_S_COMPLETE, a protocol error has occurred and the key
+        exchange MUST fail.</t>
+
+        <t>If the client receives a SSH_MSG_KEXGSS_COMPLETE message and a
+        call to GSS_Init_sec_context() does not result in a major_status
+        code of GSS_S_COMPLETE, a protocol error has occurred and the key
+        exchange MUST fail.</t>
+
+      </section>
+
+      <section title="PQ/T Key Exchange Methods">
+      <texttable>
+        <preamble>The following new key exchange methods are defined:
+        </preamble>
+          <ttcol align="left">Key Exchange Method Name</ttcol>
+          <ttcol align="left">Implementation Recommendations</ttcol>
+          <c>gss-mlkem768nistp256-sha256-*</c><c>SHOULD/RECOMMENDED</c>
+          <c>gss-mlkem1024nistp384-sha384-*</c><c>MAY/OPTIONAL</c>
+          <c>gss-mlkem768x25519-sha256-*</c><c>SHOULD/RECOMMENDED</c>
+      </texttable>
+      <t>Each key exchange method is implicitly registered by this document.
+        The IESG is considered to be the owner of all these key exchange
+        methods; this does NOT imply that the IESG is considered to be the
+        owner of the underlying GSS-API mechanism.</t>
+      <t>
+        Each method in any family of methods specifies GSS-API-authenticated
+        Post-Quantum Traditional Hybrid key exchanges as described in <xref
+        target="gen_gss_pqt"/>. The method name for each method is the
+        concatenation of the family method name with the Base64 encoding of
+        the MD5 hash <xref target="RFC1321"/> of the ASN.1 DER encoding
+        <xref target="ISO-IEC-8825-1"/> of the underlying GSS-API
+        mechanism's OID. Base64 encoding is described in Section 6.8 of
+        <xref target="RFC2045"/>.</t>
+      <texttable>
+        <preamble>Family method refences</preamble>
+          <ttcol align="left">Family Name prefix</ttcol>
+          <ttcol align="left">Hash Function</ttcol>
+          <ttcol align="left">Parameters / Function Name</ttcol>
+          <ttcol align="left">Definition</ttcol>
+          <c>gss-mlkem768nistp256-sha256-</c><c>SHA-256</c><c>mlkem768nistp256</c>
+            <c>Section 2.3.1 of <xref target="I-D.ietf-sshm-mlkem-hybrid-kex"/></c>
+          <c>gss-mlkem1024nistp384-sha384-</c><c>SHA-384</c><c>mlkem1024nistp384</c>
+            <c>Section 2.3.2 of <xref target="I-D.ietf-sshm-mlkem-hybrid-kex"/></c>
+          <c>gss-mlkem768x25519-sha256-</c><c>SHA-256</c><c>mlkem768x25519</c>
+            <c>Section 2.3.3 of <xref target="I-D.ietf-sshm-mlkem-hybrid-kex"/></c>
+      </texttable>
+      </section>
+    </section>
+
+    <section title="IANA Considerations">
+      <t>This document augments the SSH Key Exchange Method Names in <xref
+      target="RFC4462"/>.</t>
+      <texttable>
+        <preamble>IANA is requested to update the <xref
+        target="IANA-KEX-NAMES">SSH Protocol Parameters</xref> registry
+        with the following entries:</preamble>
+          <ttcol align="left">Key Exchange Method Name</ttcol>
+          <ttcol align="left">Reference</ttcol>
+          <ttcol align="left">OK to Implement</ttcol>
+          <c>gss-mlkem768nistp256-sha256-*</c><c>This draft</c><c>SHOULD</c>
+          <c>gss-mlkem1024nistp384-sha384-*</c><c>This draft</c><c>SHOULD</c>
+          <c>gss-mlkem768x25519-sha256-*</c><c>This draft</c><c>SHOULD</c>
+      </texttable>
+    </section>
+
+    <section title="Security Considerations">
+      <section title="New PQ/T key exchange mechanisms">
+        <t>Although a new cryptographic primitive is used with these methods
+        the actual key exchange closely follows the key exchange defined in
+        <xref target="I-D.ietf-sshm-mlkem-hybrid-kex"/>; therefore all the original Security
+        Considerations as well as those expressed in <xref target="I-D.ietf-sshm-mlkem-hybrid-kex"/>
+        apply.</t>
+      </section>
+      <section title="GSSAPI Delegation">
+        <t>Some GSSAPI mechanisms can act on a request to delegate credentials
+        to the target host when the deleg_req_flag is set. In this case, extra
+        care must be taken to ensure that the acceptor being authenticated
+        matches the target the user intended. Some mechanisms implementations
+        (like commonly used krb5 libraries) may use insecure DNS resolution to
+        canonicalize the target name; in these cases spoofing a DNS response
+        that points to an attacker-controlled machine may results in the user
+        silently delegating credentials to the attacker, who can then
+        impersonate the user at will.</t>
+      </section>
+    </section>
+
+  </middle>
+
+  <back>
+<?rfc rfcedstyle="no"?>
+    <references title="Normative References">
+
+      &RFC1321;
+      &RFC2045;
+
+      &RFC2743;
+
+      <!--SSH GSS-API Methods-->
+
+      &RFC4462;
+
+      <!-- SSH ECC Algorithms -->
+
+      &RFC5656;
+
+      &RFC7546;
+
+      <!--Key words for use in RFCs to Indicate Requirement Levels-->
+
+      &RFC2119;
+
+      &RFC8174;
+
+      &PQTKEX;
+
+    </references>
+
+    <references title="Informative References">
+
+      <reference
+          anchor="ISO-IEC-8825-1"
+          target="http://standards.iso.org/ittf/PubliclyAvailableStandards/c068345_ISO_IEC_8825-1_2015.zip">
+        <front>
+          <title>ASN.1 encoding rules: Specification of Basic Encoding Rules
+          (BER), Canonical Encoding Rules (CER) and Distinguished Encoding
+          Rules (DER)</title>
+          <author>
+            <organization>International Organization for Standardization /
+            International Electrotechnical Commission</organization>
+          </author>
+          <date day="15" month="November" year="2015"/>
+        </front>
+        <seriesInfo name="ISO/IEC" value="8825-1"/>
+      </reference>
+
+      <reference
+          anchor="IANA-KEX-NAMES"
+          target="https://www.iana.org/assignments/ssh-parameters/ssh-parameters.xhtml#ssh-parameters-16">
+        <front>
+          <title> Secure Shell (SSH) Protocol Parameters: Key Exchange Method Names</title>
+          <author>
+            <organization
+                abbrev="IANA">Internet Assigned Numbers Authority
+            </organization>
+          </author>
+          <date day="2" month="June" year="2005"/>
+        </front>
+      </reference>
+    </references>
+
+  </back>
+</rfc>
