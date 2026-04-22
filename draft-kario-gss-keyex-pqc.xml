@@ -21,7 +21,7 @@
 <?rfc autobreaks="yes"?>
 <?rfc docmapping="yes"?>
 
-<rfc category="std" docName="draft-kario-gss-keyex-pqc-01"
+<rfc category="std" docName="draft-kario-gss-keyex-pqc-00"
      ipr="trust200902">
   <front>
     <title abbrev="GSS Keyex SHA2">GSS-API Key Exchange with hybrid ML-KEM</title>
