@@ -21,7 +21,7 @@
 <?rfc autobreaks="yes"?>
 <?rfc docmapping="yes"?>
 
-<rfc category="std" docName="draft-kario-gss-keyex-pqc"
+<rfc category="std" docName="draft-kario-gss-keyex-pqc-01"
      ipr="trust200902">
   <front>
     <title abbrev="GSS Keyex SHA2">GSS-API Key Exchange with hybrid ML-KEM</title>
@@ -39,7 +39,7 @@
         <email>hkario@redhat.com</email>
       </address>
     </author>
-    <date month="Apr" year="2026" />
+    <date day="22" month="Apr" year="2026" />
 
     <area>Security</area>
 
@@ -48,7 +48,7 @@
     <abstract>
       <t>This document specifies additions to RFC4462.
       It defines a new key exchange methods that use hybrid
-      traditional/ML-KEM key exchange.
+      Post-Quantum Traditional (PQ/T) key exchange.
       The purpose of this specification is to
       modernize the cryptographic primitives used by Generic Security Service
       (GSS) key exchanges.</t>
@@ -87,7 +87,7 @@
       appear in all capitals, as shown here.</t>
     </section>
 
-    <section title="New PQ/T Hybrid Key Exchange Method methods">
+    <section title="New PQ/T Hybrid Key Exchange methods">
       <t>In <xref target="I-D.ietf-sshm-mlkem-hybrid-kex"/> new SSH key
       exchange algorithms based on PQ/T Hybrid Key Exchange Methods
       are introduced. We reuse much of section 2
@@ -235,7 +235,8 @@
           <preamble>As the final message the server sends either:</preamble>
           <artwork>
     byte      SSH_MSG_KEXGSS_COMPLETE
-    string    Q_S, server's ephemeral public key and encapsulated key octet string
+    string    Q_S, server's ephemeral public key and encapsulated key
+              octet string
     string    mic_token (MIC of H)
     boolean   TRUE
     string    output_token (from GSS_Accept_sec_context())
@@ -245,7 +246,8 @@
           <preamble>Or the following if no output_token is available:</preamble>
           <artwork>
     byte      SSH_MSG_KEXGSS_COMPLETE
-    string    Q_S, server's ephemeral public key and encapsulated key octet string
+    string    Q_S, server's ephemeral public key and encapsulated key
+              octet string
     string    mic_token (MIC of H)
     boolean   FALSE
           </artwork>
@@ -260,7 +262,8 @@
     string    I_S, payload of the server's SSH_MSG_KEXINIT
     string    K_S, server's public host key
     string    Q_C, client's ephemeral public keys octet string
-    string    Q_S, server's ephemeral public key and encapsulated key octet string
+    string    Q_S, server's ephemeral public key and encapsulated key
+              octet string
     mpint     K,   shared secret
           </artwork>
         </figure>
